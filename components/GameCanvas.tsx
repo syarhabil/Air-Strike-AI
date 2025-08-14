@@ -30,9 +30,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ assets, settings, isMobile, onG
   const [isPaused, setIsPaused] = useState(false);
   const [screenShake, setScreenShake] = useState(0);
 
-  const { play: playLaser } = useAudio(assets.sfx.laser, { volume: 0.4 });
-  const { play: playHit } = useAudio(assets.sfx.hit, { volume: 0.3 });
-  const { play: playExplosion } = useAudio(assets.sfx.explosion, { volume: 0.5 });
+  const { play: playLaser } = useAudio(assets.sfx.laser.url, { volume: 0.4 });
+  const { play: playHit } = useAudio(assets.sfx.hit.url, { volume: 0.3 });
+  const { play: playExplosion } = useAudio(assets.sfx.explosion.url, { volume: 0.5 });
 
   // Game state refs
   const playerRef = useRef<Player>({ id: 'player', x: 0, y: 0, width: 60, height: 60 });

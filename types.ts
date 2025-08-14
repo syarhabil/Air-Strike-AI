@@ -13,14 +13,19 @@ export interface Settings {
   difficulty: 'easy' | 'medium' | 'hard';
 }
 
+export interface SoundAsset {
+  url: string;
+  source: string;
+}
+
 export interface GeneratedAssets {
   player: string; // base64 string
   enemy: string; // base64 string
   mission: string;
   sfx: {
-    laser: string;
-    hit: string;
-    explosion: string;
+    laser: SoundAsset;
+    hit: SoundAsset;
+    explosion: SoundAsset;
   };
 }
 

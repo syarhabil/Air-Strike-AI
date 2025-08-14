@@ -1,6 +1,6 @@
 
 import React, { useState, useCallback } from 'react';
-import { GeneratedAssets } from '../types';
+import { GeneratedAssets, SoundAsset } from '../types';
 import { generateImage, generateMission, findSoundUrl } from '../services/geminiService';
 import { BackIcon } from './Icon';
 
@@ -25,14 +25,18 @@ const AssetGenerator: React.FC<AssetGeneratorProps> = ({ onStartGame, onBack }) 
     setError(null);
     setAssets(null);
 
+    const laserFallback: SoundAsset = { url: 'https://assets.mixkit.co/sfx/preview/mixkit-short-laser-gun-shot-1670.mp3', source: 'Mixkit' };
+    const hitFallback: SoundAsset = { url: 'https://assets.mixkit.co/sfx/preview/mixkit-electronic-retro-block-hit-2185.mp3', source: 'Mixkit' };
+    const explosionFallback: SoundAsset = { url: 'https://assets.mixkit.co/sfx/preview/mixkit-fast-explosion-1688.mp3', source: 'Mixkit' };
+
     try {
       const [playerImg, enemyImg, missionText, laserSfx, hitSfx, explosionSfx] = await Promise.all([
         generateImage(playerPrompt),
         generateImage(enemyPrompt),
         generateMission(),
-        findSoundUrl('short laser gun shot', 'https://assets.mixkit.co/sfx/preview/mixkit-short-laser-gun-shot-1670.mp3'),
-        findSoundUrl('quick electronic retro hit', 'https://assets.mixkit.co/sfx/preview/mixkit-electronic-retro-block-hit-2185.mp3'),
-        findSoundUrl('fast, sharp explosion', 'https://assets.mixkit.co/sfx/preview/mixkit-fast-explosion-1688.mp3')
+        findSoundUrl('short laser gun shot', laserFallback),
+        findSoundUrl('quick electronic retro hit', hitFallback),
+        findSoundUrl('fast, sharp explosion', explosionFallback)
       ]);
 
       setAssets({
@@ -96,29 +100,41 @@ const AssetGenerator: React.FC<AssetGeneratorProps> = ({ onStartGame, onBack }) 
             {isLoading ? 'Generating Assets...' : 'Generate Assets'}
         </button>
 
-        <div className="mt-8 flex gap-8 items-center justify-center h-48">
-            {isLoading && <LoadingSpinner />}
-            {assets?.player && (
-                <div className="text-center animate-fadeIn">
-                    <h3 className="text-lg font-semibold mb-2">Your Ship</h3>
-                    <img src={`data:image/png;base64,${assets.player}`} alt="Player Ship" className="w-32 h-32 object-contain bg-black/20 rounded-md p-2 border border-cyan-400"/>
-                </div>
-            )}
-            {assets?.enemy && (
-                <div className="text-center animate-fadeIn">
-                    <h3 className="text-lg font-semibold mb-2">Enemy Ship</h3>
-                    <img src={`data:image/png;base64,${assets.enemy}`} alt="Enemy Ship" className="w-32 h-32 object-contain bg-black/20 rounded-md p-2 border border-cyan-400"/>
-                </div>
-            )}
-        </div>
+        {isLoading && <div className="mt-8 h-48 flex items-center"><LoadingSpinner /></div>}
         
-        {canStart && (
-             <button
-                onClick={() => onStartGame(assets)}
-                className="mt-8 w-72 py-4 px-6 text-xl font-bold text-black bg-yellow-400 rounded-md hover:bg-yellow-300 transition-all duration-300 animate-pulse"
-            >
-                LAUNCH MISSION
-            </button>
+        {assets && (
+            <div className="mt-8 w-full max-w-4xl flex flex-col items-center animate-fadeIn">
+                <div className="flex gap-8 items-start justify-center">
+                    {assets.player && (
+                        <div className="text-center">
+                            <h3 className="text-lg font-semibold mb-2">Your Ship</h3>
+                            <img src={`data:image/png;base64,${assets.player}`} alt="Player Ship" className="w-32 h-32 object-contain bg-black/20 rounded-md p-2 border border-cyan-400"/>
+                        </div>
+                    )}
+                    {assets.enemy && (
+                        <div className="text-center">
+                            <h3 className="text-lg font-semibold mb-2">Enemy Ship</h3>
+                            <img src={`data:image/png;base64,${assets.enemy}`} alt="Enemy Ship" className="w-32 h-32 object-contain bg-black/20 rounded-md p-2 border border-cyan-400"/>
+                        </div>
+                    )}
+                </div>
+
+                <div className="mt-6 text-center w-full">
+                    <h3 className="text-lg font-semibold mb-2 text-cyan-300">Generated Audio</h3>
+                    <div className="text-sm text-gray-300 bg-gray-900/50 p-4 rounded-md border border-gray-700 grid md:grid-cols-3 gap-x-4 gap-y-2">
+                        <p><strong>Laser:</strong> from <span className="text-cyan-400">{assets.sfx.laser.source}</span></p>
+                        <p><strong>Hit:</strong> from <span className="text-cyan-400">{assets.sfx.hit.source}</span></p>
+                        <p><strong>Explosion:</strong> from <span className="text-cyan-400">{assets.sfx.explosion.source}</span></p>
+                    </div>
+                </div>
+
+                <button
+                    onClick={() => onStartGame(assets)}
+                    className="mt-8 w-72 py-4 px-6 text-xl font-bold text-black bg-yellow-400 rounded-md hover:bg-yellow-300 transition-all duration-300 animate-pulse"
+                >
+                    LAUNCH MISSION
+                </button>
+            </div>
         )}
     </div>
   );

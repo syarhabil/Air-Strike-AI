@@ -1,5 +1,6 @@
 
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
+import { SoundAsset } from "../types";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -42,27 +43,45 @@ export const generateMission = async (): Promise<string> => {
     }
 };
 
-export const findSoundUrl = async (description: string, fallbackUrl: string): Promise<string> => {
+export const findSoundUrl = async (description: string, fallbackAsset: SoundAsset): Promise<SoundAsset> => {
     try {
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: `Find a sound for: '${description}'. Good sources are pixabay.com or mixkit.co.`,
             config: {
-                systemInstruction: "You are an expert asset finder. Your task is to find a direct URL to a single, high-quality, royalty-free sound effect. The URL must link directly to an audio file ending in .mp3, .wav, or .ogg. Provide ONLY the raw URL and nothing else.",
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        url: {
+                            type: Type.STRING,
+                            description: "The direct URL to a single, high-quality, royalty-free audio file (.mp3, .wav, or .ogg).",
+                        },
+                        source: {
+                            type: Type.STRING,
+                            description: "The domain name of the source website (e.g., 'pixabay.com' or 'mixkit.co')."
+                        }
+                    },
+                    required: ["url", "source"],
+                },
+                systemInstruction: "You are an expert asset finder. Your task is to return a JSON object containing a direct audio file URL and its source domain.",
                 temperature: 0.2,
-                stopSequences: ["\n"],
                 thinkingConfig: { thinkingBudget: 0 }
             }
         });
-        const url = response.text.trim();
-        if (url.startsWith('https') && (url.endsWith('.mp3') || url.endsWith('.wav') || url.endsWith('.ogg'))) {
-            console.log(`AI found sound for "${description}": ${url}`);
-            return url;
+
+        const jsonText = response.text.trim();
+        const parsed = JSON.parse(jsonText);
+        
+        if (parsed.url && parsed.source && parsed.url.startsWith('https')) {
+            console.log(`AI found sound for "${description}" from ${parsed.source}: ${parsed.url}`);
+            return parsed;
         }
-        console.warn(`AI returned an invalid sound URL: "${url}". Using fallback.`);
-        return fallbackUrl;
+
+        console.warn(`AI returned invalid JSON: "${jsonText}". Using fallback.`);
+        return fallbackAsset;
     } catch (error) {
         console.error(`Error finding sound URL for "${description}":`, error);
-        return fallbackUrl;
+        return fallbackAsset;
     }
 };
